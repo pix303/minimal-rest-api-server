@@ -1,8 +1,8 @@
-# minimal-rest-api-server
+# Minimal REST API
 
 Project template for forking and implement real rest api
-- **chi** is used as mux and to manage authorization
-- **bun** is used for manage Postgresql db
+- [**chi**](https://github.com/go-chi/chi) is used as mux and to manage authorization
+- [**bun**](https://bun.uptrace.dev/) is used for manage Postgresql db
 
 TODO
 - add html to init authenticaion by provider as Google
