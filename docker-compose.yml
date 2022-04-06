@@ -1,0 +1,32 @@
+version: "3.9"
+
+services:
+  postgresdb:
+    container_name: postgres_container
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+      POSTGRES_DB: locale-mgmt
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - psqldata:/var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+
+  pgadmin:
+    container_name: pgadmin_container
+    image: dpage/pgadmin4:latest
+    depends_on:
+      - postgresdb
+    environment:
+      PGADMIN_DEFAULT_EMAIL: pix@pix.it
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    volumes:
+      - pgadmindata:/var/lib/pgadmin
+    ports:
+      - "5050:80"
+
+volumes:
+  psqldata:
+  pgadmindata:
