@@ -50,5 +50,4 @@ func GenerateTokenForDebug(duration int) string {
 	signedTokenString, _ := token.SignedString([]byte(authToken.SecretKey))
 
 	return signedTokenString
-
 }

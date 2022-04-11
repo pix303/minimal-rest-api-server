@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -83,7 +82,7 @@ func JWTValidatorMiddleware(next http.Handler) http.Handler {
 		parsedToken, err := jwt.ParseWithClaims(authToken.Source, claims, func(t *jwt.Token) (interface{}, error) {
 
 			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fmt.Errorf("Unexpected signing method: %v", t.Header["alg"])
+				return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
 			}
 
 			return authToken.SecretKey, nil
@@ -101,13 +100,12 @@ func JWTValidatorMiddleware(next http.Handler) http.Handler {
 
 		ctx := context.WithValue(rq.Context(), contextKeyUsernameKey, claims.Subject)
 		next.ServeHTTP(rw, rq.WithContext(ctx))
-
 	})
 }
 
 func welcomeAuthedHandler(rw http.ResponseWriter, rq *http.Request) {
 	username := rq.Context().Value(contextKeyUsernameKey).(string)
-	rw.Write([]byte(fmt.Sprintf("Welcome %s to minimal web api authenticated", username)))
+	EncodeBody(rw, rq, fmt.Sprintf("Welcome %s to minimal web api authenticated", username))
 }
 
 func (s *PersistenceHandler) usersGetHandler(rw http.ResponseWriter, rq *http.Request) {
@@ -116,10 +114,6 @@ func (s *PersistenceHandler) usersGetHandler(rw http.ResponseWriter, rq *http.Re
 		RespondError(rw, rq, err, "Error on retrive users", http.StatusInternalServerError)
 		return
 	}
-	userJson, err := json.Marshal(users)
-	if err != nil {
-		RespondError(rw, rq, err, "Error on json encoding user", http.StatusInternalServerError)
-		return
-	}
-	rw.Write([]byte(userJson))
+
+	EncodeBody(rw, rq, users)
 }
