@@ -1,25 +1,27 @@
 package main
 
 import (
-	"log"
 	"net/http"
 	"os"
 
 	"github.com/joho/godotenv"
 	"github.com/pix303/minimal-rest-api-server/pkg/api"
+	"github.com/rs/zerolog/log"
 )
 
 func main() {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("Error on retrive enviroment vars")
+		log.Error().Msgf("Loading env: %s", err.Error())
+		return
 	}
 
-	log.Println("hello minimal server is rolling!")
+	log.Info().Msg("Hello minimal server api!")
 
 	r, err := api.NewRouter(os.Getenv("SKEY"), os.Getenv("POSTGRES_DNS"))
 	if err != nil {
-		panic(err)
+		log.Error().Msgf("Bootstrap router: %s", err.Error())
+		return
 	}
 
 	http.ListenAndServe(":"+os.Getenv("PORT"), r)
