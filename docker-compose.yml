@@ -7,12 +7,14 @@ services:
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: admin123
-      POSTGRES_DB: locale-mgmt
+      POSTGRES_DB: example
       PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
       - psqldata:/var/lib/postgresql/data/pgdata
     ports:
       - "5432:5432"
+    networks:
+      - minimal-rest-api-context
 
   pgadmin:
     container_name: pgadmin_container
@@ -26,7 +28,23 @@ services:
       - pgadmindata:/var/lib/pgadmin
     ports:
       - "5050:80"
+    networks:
+      - minimal-rest-api-context
+
+  #cli:  docker exec -it redis_container redis-cli
+  # redis:
+  #   container_name: redis_container
+  #   image: redis:latest
+  #   volumes:
+  #     - ./redis/data:/usr/local/redis/data
+  #   ports:
+  #     - "6379:6379"
+  #   networks:
+  #     - minimal-rest-api-context
 
 volumes:
   psqldata:
   pgadmindata:
+
+networks:
+  minimal-rest-api-context:
