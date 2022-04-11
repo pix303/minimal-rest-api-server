@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/mux"
@@ -20,9 +19,9 @@ type contextKey struct {
 	name string
 }
 
-// Server rappresents components that compose app as Service
-type Server struct {
-	Service *persistence.PersistenceService
+// PersistenceHandler take care of persistence requests
+type PersistenceHandler struct {
+	UserService persistence.UserPersistencer
 }
 
 type tokenWrapper struct {
@@ -33,12 +32,12 @@ type tokenWrapper struct {
 var contextKeyUsernameKey = &contextKey{"username"}
 var authToken tokenWrapper
 
-func newServer(dbdns string) (*Server, error) {
-	ps, err := persistence.NewPersistenceService(dbdns)
+func newServer(dbdns string) (*PersistenceHandler, error) {
+	ps, err := persistence.NewPostgresqlPersistenceService(dbdns)
 	if err != nil {
 		return nil, err
 	}
-	return &Server{Service: ps}, nil
+	return &PersistenceHandler{UserService: ps}, nil
 }
 
 // NewRouter return new Router/Multiplex to handler api request endpoint
@@ -52,21 +51,8 @@ func NewRouter(secretKey string, dbDns string) (*mux.Router, error) {
 		return nil, err
 	}
 
-	// only for debug-------------------------------------------------------
-	claims := &jwt.StandardClaims{
-		ExpiresAt: time.Now().Add(time.Second * time.Duration(120)).Unix(),
-		Issuer:    "minimal-rest-api",
-		Subject:   "pix303@yahoo.it",
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	signedTokenString, err := token.SignedString([]byte(authToken.SecretKey))
-	if err != nil {
-		return nil, err
-	}
-
-	log.Info().Msg(signedTokenString)
-	//----------------------------------------------------------------------
+	// only for debug
+	log.Info().Msg(GenerateTokenForDebug(3600))
 
 	if err != nil {
 		return nil, err
@@ -124,8 +110,8 @@ func welcomeAuthedHandler(rw http.ResponseWriter, rq *http.Request) {
 	rw.Write([]byte(fmt.Sprintf("Welcome %s to minimal web api authenticated", username)))
 }
 
-func (s *Server) usersGetHandler(rw http.ResponseWriter, rq *http.Request) {
-	users, err := s.Service.GetUsers()
+func (s *PersistenceHandler) usersGetHandler(rw http.ResponseWriter, rq *http.Request) {
+	users, err := s.UserService.GetUsers()
 	if err != nil {
 		RespondError(rw, rq, err, "Error on retrive users", http.StatusInternalServerError)
 		return

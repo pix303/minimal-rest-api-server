@@ -4,6 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
+
+	"github.com/golang-jwt/jwt"
 )
 
 // decodeBody helper and abstract func to parse payload request
@@ -34,4 +37,18 @@ func RespondError(rw http.ResponseWriter, rq *http.Request, err any, errMessage 
 // respondHTTPErr helper func for build a generic error response
 func RespondHTTPErr(rw http.ResponseWriter, rq *http.Request, status int) {
 	Respond(rw, rq, http.StatusText(status), status)
+}
+
+func GenerateTokenForDebug(duration int) string {
+	claims := &jwt.StandardClaims{
+		ExpiresAt: time.Now().Add(time.Second * time.Duration(duration)).Unix(),
+		Issuer:    "minimal-rest-api",
+		Subject:   "pix303@yahoo.it",
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	signedTokenString, _ := token.SignedString([]byte(authToken.SecretKey))
+
+	return signedTokenString
+
 }
