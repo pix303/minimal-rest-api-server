@@ -35,7 +35,7 @@ func (ps *PersistenceService) GetUsers() ([]domain.User, error) {
 	}
 	defer rows.Close()
 
-	var id int32
+	var id string
 	var username string
 	for rows.Next() {
 		err = rows.Scan(&id, &username)

@@ -6,10 +6,12 @@ import (
 
 	"github.com/gorilla/handlers"
 	"github.com/joho/godotenv"
-	"github.com/markbates/goth"
-	"github.com/markbates/goth/providers/github"
 	"github.com/pix303/minimal-rest-api-server/pkg/api"
 	"github.com/rs/zerolog/log"
+	"github.com/volatiletech/authboss/v3"
+
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/github"
 )
 
 func main() {
@@ -21,11 +23,27 @@ func main() {
 
 	log.Info().Msg("Hello minimal server api!")
 
-	goth.UseProviders(
-		github.New(os.Getenv("GITHUB_CLIENT_ID"), os.Getenv("GITHUB_CLIENT_SECRET"), os.Getenv("GITHUB_CALLBACK")),
-	)
+	ab, err := api.SetupAuthConfig()
+	if err != nil {
+		log.Error().Err(err).Msg("fail to setup authorization")
+	}
 
-	r, err := api.NewRouter(os.Getenv("SKEY"), os.Getenv("GOTH_SESSION_SECRET"), os.Getenv("SESSION_SECRET"), os.Getenv("POSTGRES_DNS"))
+	ab.Config.Modules.OAuth2Providers = map[string]authboss.OAuth2Provider{
+		"github": {
+			OAuth2Config: &oauth2.Config{
+				ClientID:     os.Getenv("GITHUB_CLIENT_ID"),
+				ClientSecret: os.Getenv("GITHUB_CLIENT_SECRET"),
+				Scopes:       []string{"profile", "email"},
+				Endpoint:     github.Endpoint,
+			},
+		},
+	}
+
+	if err := ab.Init(); err != nil {
+		log.Error().Err(err).Msg("fail to init authorization")
+	}
+
+	r, err := api.NewRouter(os.Getenv("SKEY"), os.Getenv("POSTGRES_DNS"), ab)
 	loggedRouter := handlers.LoggingHandler(os.Stdout, r)
 
 	if err != nil {
