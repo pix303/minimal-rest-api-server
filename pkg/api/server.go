@@ -6,11 +6,8 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/markbates/goth/gothic"
-	"github.com/swithek/sessionup"
 
 	"github.com/pix303/minimal-rest-api-server/pkg/persistence"
-	"github.com/pix303/minimal-rest-api-server/pkg/auth"
-
 )
 
 const apiSessionKey = "api-session-key"
@@ -23,21 +20,10 @@ type contextKey struct {
 
 // PersistenceHandler take care of persistence requests
 type PersistenceHandler struct {
-	Sessioner 
 	UserService persistence.UserPersistencer
 }
 
-// // tokenWrapper brings auth token resources during process
-// type tokenWrapper struct {
-// 	SecretKey []byte
-// 	Source    string
-// }
-
 var contextKeyUsernameKey = &contextKey{"username"}
-
-//var authToken tokenWrapper
-
-var apiSessionStore sessionup.Store
 
 func newServer(dbdns string) (*PersistenceHandler, error) {
 	ps, err := persistence.NewPostgresqlPersistenceService(dbdns)
@@ -49,9 +35,7 @@ func newServer(dbdns string) (*PersistenceHandler, error) {
 
 // NewRouter return new Router/Multiplex to handler api request endpoint
 // secretKey is needed to sign auth token, dbDns is the url for connect dbrms
-func NewRouter(dbDns string, ses) (*mux.Router, error) {
-
-	//authToken.SecretKey = []byte(secretKey)
+func NewRouter(dbDns string) (*mux.Router, error) {
 
 	s, err := newServer(dbDns)
 	if err != nil {
@@ -59,6 +43,9 @@ func NewRouter(dbDns string, ses) (*mux.Router, error) {
 	}
 
 	r := mux.NewRouter()
+	r.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./favicon.ico")
+	})
 	r.HandleFunc("/", welcomeHandler)
 	r.HandleFunc("/auth/{action}/{provider}", loginHandler).Methods("GET")
 
@@ -123,7 +110,6 @@ func loginHandler(rw http.ResponseWriter, rq *http.Request) {
 			return
 		}
 
-		
 		http.Redirect(rw, rq, "/api/v1/", http.StatusSeeOther)
 
 	case "logout":
@@ -135,41 +121,6 @@ func loginHandler(rw http.ResponseWriter, rq *http.Request) {
 		}
 	}
 }
-
-// func JWTValidatorMiddleware(next http.Handler) http.Handler {
-// 	return http.HandlerFunc(func(rw http.ResponseWriter, rq *http.Request) {
-
-// 		bearerHead := rq.Header.Get("Authorization")
-// 		if bearerHead == "" {
-// 			RespondHTTPErr(rw, rq, http.StatusUnauthorized)
-// 			return
-// 		}
-// 		authToken.Source = strings.Split(bearerHead, " ")[1]
-
-// 		claims := &jwt.StandardClaims{}
-// 		parsedToken, err := jwt.ParseWithClaims(authToken.Source, claims, func(t *jwt.Token) (interface{}, error) {
-
-// 			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-// 				return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
-// 			}
-
-// 			return authToken.SecretKey, nil
-// 		})
-
-// 		if err != nil {
-// 			RespondError(rw, rq, err, "Error on parse JWT", http.StatusUnauthorized)
-// 			return
-// 		}
-
-// 		if !parsedToken.Valid {
-// 			RespondError(rw, rq, err, "Error on valid JWT", http.StatusUnauthorized)
-// 			return
-// 		}
-
-// 		ctx := context.WithValue(rq.Context(), contextKeyUsernameKey, claims.Subject)
-// 		next.ServeHTTP(rw, rq.WithContext(ctx))
-// 	})
-// }
 
 func welcomeAuthedHandler(rw http.ResponseWriter, rq *http.Request) {
 	usernameRaw := rq.Context().Value(contextKeyUsernameKey)
