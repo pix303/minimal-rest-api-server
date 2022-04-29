@@ -9,6 +9,8 @@ import (
 	"github.com/swithek/sessionup"
 
 	"github.com/pix303/minimal-rest-api-server/pkg/persistence"
+	"github.com/pix303/minimal-rest-api-server/pkg/auth"
+
 )
 
 const apiSessionKey = "api-session-key"
@@ -21,6 +23,7 @@ type contextKey struct {
 
 // PersistenceHandler take care of persistence requests
 type PersistenceHandler struct {
+	Sessioner 
 	UserService persistence.UserPersistencer
 }
 
@@ -46,7 +49,7 @@ func newServer(dbdns string) (*PersistenceHandler, error) {
 
 // NewRouter return new Router/Multiplex to handler api request endpoint
 // secretKey is needed to sign auth token, dbDns is the url for connect dbrms
-func NewRouter(dbDns string) (*mux.Router, error) {
+func NewRouter(dbDns string, ses) (*mux.Router, error) {
 
 	//authToken.SecretKey = []byte(secretKey)
 
@@ -120,13 +123,7 @@ func loginHandler(rw http.ResponseWriter, rq *http.Request) {
 			return
 		}
 
-		// userSession, err := sessionStore.Get(rq, apiSessionKey)
-		// if err != nil {
-		// 	RespondError(rw, rq, err, "fail on create session", http.StatusInternalServerError)
-		// }
-		// userSession.Values[apiSessionUserKey] = u.Email
-		// userSession.Save(rq, rw)
-		// fmt.Printf("user: %vb\r", u)
+		
 		http.Redirect(rw, rq, "/api/v1/", http.StatusSeeOther)
 
 	case "logout":
