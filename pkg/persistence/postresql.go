@@ -8,18 +8,30 @@ import (
 	"github.com/pix303/minimal-rest-api-server/pkg/domain"
 )
 
+var dbInstance *sql.DB
+
+func GetDBInstance(dbdns string) (*sql.DB, error) {
+	var err error
+	if dbInstance == nil {
+		dbInstance, err = sql.Open("postgres", dbdns)
+		if err != nil {
+			return nil, err
+		}
+
+		err = dbInstance.Ping()
+		if err != nil {
+			return nil, err
+		}
+	}
+	return dbInstance, nil
+}
+
 // NewPersistenceService manage dbrms connecton and requests
 func NewPostgresqlPersistenceService(dbdns string) (*PersistenceService, error) {
-	db, err := sql.Open("postgres", dbdns)
+	db, err := GetDBInstance(dbdns)
 	if err != nil {
 		return nil, err
 	}
-
-	err = db.Ping()
-	if err != nil {
-		return nil, err
-	}
-
 	service := PersistenceService{db}
 
 	return &service, nil

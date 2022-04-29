@@ -1,23 +1,18 @@
 package api
 
 import (
-	"context"
 	"fmt"
 	"net/http"
-	"strings"
 
-	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/mux"
-	"github.com/gorilla/sessions"
 	"github.com/markbates/goth/gothic"
+	"github.com/swithek/sessionup"
 
 	"github.com/pix303/minimal-rest-api-server/pkg/persistence"
 )
 
 const apiSessionKey = "api-session-key"
 const apiSessionUserKey = "api-session-key-user"
-
-var sessionStore *sessions.CookieStore
 
 // contextKey rappersents specific context key type to override default interface{} type for key in Context
 type contextKey struct {
@@ -29,14 +24,17 @@ type PersistenceHandler struct {
 	UserService persistence.UserPersistencer
 }
 
-// tokenWrapper brings auth token resources during process
-type tokenWrapper struct {
-	SecretKey []byte
-	Source    string
-}
+// // tokenWrapper brings auth token resources during process
+// type tokenWrapper struct {
+// 	SecretKey []byte
+// 	Source    string
+// }
 
 var contextKeyUsernameKey = &contextKey{"username"}
-var authToken tokenWrapper
+
+//var authToken tokenWrapper
+
+var apiSessionStore sessionup.Store
 
 func newServer(dbdns string) (*PersistenceHandler, error) {
 	ps, err := persistence.NewPostgresqlPersistenceService(dbdns)
@@ -48,19 +46,9 @@ func newServer(dbdns string) (*PersistenceHandler, error) {
 
 // NewRouter return new Router/Multiplex to handler api request endpoint
 // secretKey is needed to sign auth token, dbDns is the url for connect dbrms
-func NewRouter(secretKey, authSessionSecretKey, sessionSecretKey, dbDns string) (*mux.Router, error) {
+func NewRouter(dbDns string) (*mux.Router, error) {
 
-	authToken.SecretKey = []byte(secretKey)
-
-	sessionStore = sessions.NewCookieStore([]byte(sessionSecretKey))
-	sessionStore.Options.MaxAge = 20
-	sessionStore.Options.HttpOnly = true
-	sessionStore.Options.Path = "/"
-
-	authProviderSessionStore := sessions.NewCookieStore([]byte(authSessionSecretKey))
-	authProviderSessionStore.Options.HttpOnly = true
-	authProviderSessionStore.Options.MaxAge = 60
-	gothic.Store = authProviderSessionStore
+	//authToken.SecretKey = []byte(secretKey)
 
 	s, err := newServer(dbDns)
 	if err != nil {
@@ -86,19 +74,20 @@ func welcomeHandler(rw http.ResponseWriter, rq *http.Request) {
 
 func authMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, rq *http.Request) {
-		userSession, err := sessionStore.Get(rq, apiSessionKey)
-		if err != nil {
-			RespondHTTPErr(rw, rq, http.StatusUnauthorized)
-			return
-		}
-		if userSession.IsNew {
-			RespondHTTPErr(rw, rq, http.StatusUnauthorized)
-			return
-		}
+		// userSession, err := sessionStore.Get(rq, apiSessionKey)
+		// if err != nil {
+		// 	RespondHTTPErr(rw, rq, http.StatusUnauthorized)
+		// 	return
+		// }
+		// if userSession.IsNew {
+		// 	RespondHTTPErr(rw, rq, http.StatusUnauthorized)
+		// 	return
+		// }
 
-		userEmail := userSession.Values[apiSessionUserKey].(string)
-		ctx := context.WithValue(rq.Context(), contextKeyUsernameKey, userEmail)
-		next.ServeHTTP(rw, rq.WithContext(ctx))
+		// userEmail := userSession.Values[apiSessionUserKey].(string)
+		// ctx := context.WithValue(rq.Context(), contextKeyUsernameKey, userEmail)
+		// next.ServeHTTP(rw, rq.WithContext(ctx))
+		next.ServeHTTP(rw, rq)
 	})
 }
 
@@ -117,7 +106,7 @@ func loginHandler(rw http.ResponseWriter, rq *http.Request) {
 		}
 
 	case "callback":
-		u, err := gothic.CompleteUserAuth(rw, rq)
+		_, err := gothic.CompleteUserAuth(rw, rq)
 		if err != nil {
 			RespondError(rw, rq, err, fmt.Sprintf("failed authorization for %s", provider), http.StatusUnauthorized)
 			return
@@ -131,13 +120,13 @@ func loginHandler(rw http.ResponseWriter, rq *http.Request) {
 			return
 		}
 
-		userSession, err := sessionStore.Get(rq, apiSessionKey)
-		if err != nil {
-			RespondError(rw, rq, err, "fail on create session", http.StatusInternalServerError)
-		}
-		userSession.Values[apiSessionUserKey] = u.Email
-		userSession.Save(rq, rw)
-		fmt.Println(u.Email)
+		// userSession, err := sessionStore.Get(rq, apiSessionKey)
+		// if err != nil {
+		// 	RespondError(rw, rq, err, "fail on create session", http.StatusInternalServerError)
+		// }
+		// userSession.Values[apiSessionUserKey] = u.Email
+		// userSession.Save(rq, rw)
+		// fmt.Printf("user: %vb\r", u)
 		http.Redirect(rw, rq, "/api/v1/", http.StatusSeeOther)
 
 	case "logout":
@@ -150,40 +139,40 @@ func loginHandler(rw http.ResponseWriter, rq *http.Request) {
 	}
 }
 
-func JWTValidatorMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(rw http.ResponseWriter, rq *http.Request) {
+// func JWTValidatorMiddleware(next http.Handler) http.Handler {
+// 	return http.HandlerFunc(func(rw http.ResponseWriter, rq *http.Request) {
 
-		bearerHead := rq.Header.Get("Authorization")
-		if bearerHead == "" {
-			RespondHTTPErr(rw, rq, http.StatusUnauthorized)
-			return
-		}
-		authToken.Source = strings.Split(bearerHead, " ")[1]
+// 		bearerHead := rq.Header.Get("Authorization")
+// 		if bearerHead == "" {
+// 			RespondHTTPErr(rw, rq, http.StatusUnauthorized)
+// 			return
+// 		}
+// 		authToken.Source = strings.Split(bearerHead, " ")[1]
 
-		claims := &jwt.StandardClaims{}
-		parsedToken, err := jwt.ParseWithClaims(authToken.Source, claims, func(t *jwt.Token) (interface{}, error) {
+// 		claims := &jwt.StandardClaims{}
+// 		parsedToken, err := jwt.ParseWithClaims(authToken.Source, claims, func(t *jwt.Token) (interface{}, error) {
 
-			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
-			}
+// 			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+// 				return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
+// 			}
 
-			return authToken.SecretKey, nil
-		})
+// 			return authToken.SecretKey, nil
+// 		})
 
-		if err != nil {
-			RespondError(rw, rq, err, "Error on parse JWT", http.StatusUnauthorized)
-			return
-		}
+// 		if err != nil {
+// 			RespondError(rw, rq, err, "Error on parse JWT", http.StatusUnauthorized)
+// 			return
+// 		}
 
-		if !parsedToken.Valid {
-			RespondError(rw, rq, err, "Error on valid JWT", http.StatusUnauthorized)
-			return
-		}
+// 		if !parsedToken.Valid {
+// 			RespondError(rw, rq, err, "Error on valid JWT", http.StatusUnauthorized)
+// 			return
+// 		}
 
-		ctx := context.WithValue(rq.Context(), contextKeyUsernameKey, claims.Subject)
-		next.ServeHTTP(rw, rq.WithContext(ctx))
-	})
-}
+// 		ctx := context.WithValue(rq.Context(), contextKeyUsernameKey, claims.Subject)
+// 		next.ServeHTTP(rw, rq.WithContext(ctx))
+// 	})
+// }
 
 func welcomeAuthedHandler(rw http.ResponseWriter, rq *http.Request) {
 	usernameRaw := rq.Context().Value(contextKeyUsernameKey)
@@ -191,8 +180,10 @@ func welcomeAuthedHandler(rw http.ResponseWriter, rq *http.Request) {
 	if usernameRaw != nil {
 		if username, ok := usernameRaw.(string); ok {
 			EncodeBody(rw, rq, fmt.Sprintf("Welcome %s to minimal web api authenticated", username))
+			return
 		}
 	}
+	EncodeBody(rw, rq, "Welcome unknow to minimal web api authenticated")
 }
 
 func (s *PersistenceHandler) usersGetHandler(rw http.ResponseWriter, rq *http.Request) {

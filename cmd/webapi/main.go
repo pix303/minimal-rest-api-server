@@ -6,10 +6,11 @@ import (
 
 	"github.com/gorilla/handlers"
 	"github.com/joho/godotenv"
-	"github.com/markbates/goth"
-	"github.com/markbates/goth/providers/github"
+
 	"github.com/pix303/minimal-rest-api-server/pkg/api"
 	"github.com/rs/zerolog/log"
+
+	"github.com/pix303/minimal-rest-api-server/pkg/auth"
 )
 
 func main() {
@@ -21,11 +22,16 @@ func main() {
 
 	log.Info().Msg("Hello minimal server api!")
 
-	goth.UseProviders(
-		github.New(os.Getenv("GITHUB_CLIENT_ID"), os.Getenv("GITHUB_CLIENT_SECRET"), os.Getenv("GITHUB_CALLBACK")),
-	)
+	providers := make(map[string]auth.ProviderKeys)
+	providers["github"] = auth.ProviderKeys{
+		ClientID:     os.Getenv("GITHUB_CLIENT_ID"),
+		ClientSecret: os.Getenv("GITHUB_CLIENT_SECRET"),
+		Callback:     os.Getenv("GITHUB_CALLBACK"),
+	}
 
-	r, err := api.NewRouter(os.Getenv("SKEY"), os.Getenv("GOTH_SESSION_SECRET"), os.Getenv("SESSION_SECRET"), os.Getenv("POSTGRES_DNS"))
+	auth.InitOauth(providers, os.Getenv("GOTH_SESSION_SECRET"))
+
+	r, err := api.NewRouter(os.Getenv("POSTGRES_DNS"))
 	loggedRouter := handlers.LoggingHandler(os.Stdout, r)
 
 	if err != nil {
