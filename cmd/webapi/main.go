@@ -20,7 +20,7 @@ func main() {
 		return
 	}
 
-	log.Info().Msg("Hello minimal server api!")
+	log.Info().Msg("Hello minimal api!")
 
 	providers := make(map[string]auth.ProviderKeys)
 	providers["github"] = auth.ProviderKeys{
@@ -29,15 +29,15 @@ func main() {
 		Callback:     os.Getenv("GITHUB_CALLBACK"),
 	}
 
-	auth.InitOauth(providers, os.Getenv("GOTH_SESSION_SECRET"))
+	auth.InitOauth(providers, os.Getenv("OAUTH_SESSION_SECRET"))
 
 	r, err := api.NewRouter(os.Getenv("POSTGRES_DNS"))
-	loggedRouter := handlers.LoggingHandler(os.Stdout, r)
 
 	if err != nil {
 		log.Error().Msgf("Bootstrap router: %s", err.Error())
 		return
 	}
 
+	loggedRouter := handlers.LoggingHandler(os.Stdout, r)
 	http.ListenAndServe(":"+os.Getenv("PORT"), loggedRouter)
 }
