@@ -7,12 +7,14 @@ import (
 	"github.com/markbates/goth/providers/github"
 )
 
+// ProviderKeys rappresents config to connect to authentication provier
 type ProviderKeys struct {
 	ClientID     string
 	ClientSecret string
 	Callback     string
 }
 
+// InitOauth inits oauth manager
 func InitOauth(providersMap map[string]ProviderKeys, sessionSecret string) {
 
 	for k, pkeys := range providersMap {
@@ -26,5 +28,4 @@ func InitOauth(providersMap map[string]ProviderKeys, sessionSecret string) {
 	authProviderSessionStore.Options.HttpOnly = true
 	authProviderSessionStore.Options.MaxAge = 60
 	gothic.Store = authProviderSessionStore
-
 }

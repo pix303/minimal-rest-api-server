@@ -10,10 +10,12 @@ import (
 	"github.com/pix303/minimal-rest-api-server/pkg/domain"
 )
 
+// UserPersistencer rappresents users persist actions
 type UserPersistencer interface {
-	GetUsers() ([]domain.User, error)
+	GetUsers(offset, limit int) ([]domain.User, error)
 }
 
+// PersistenceService wrap db connector
 type PersistenceService struct {
 	db *sql.DB
 }
