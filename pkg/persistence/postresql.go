@@ -1,6 +1,8 @@
 package persistence
 
 import (
+	"fmt"
+
 	"github.com/pix303/minimal-rest-api-server/pkg/domain"
 )
 
@@ -16,10 +18,10 @@ func NewPostgresqlPersistenceService(dbdns string) (*PersistenceService, error) 
 }
 
 // GetUsers retrive all users
-func (ps *PersistenceService) GetUsers() ([]domain.User, error) {
+func (ps *PersistenceService) GetUsers(offset, limit int) ([]domain.User, error) {
 	users := make([]domain.User, 0)
 
-	rows, err := ps.db.Query("SELECT id, username FROM users")
+	rows, err := ps.db.Query(fmt.Sprintf("SELECT id, username FROM users LIMIT %d OFFSET %d", limit, offset))
 	if err != nil {
 		return nil, err
 	}
