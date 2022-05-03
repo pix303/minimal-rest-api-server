@@ -2,6 +2,7 @@ package persistence
 
 import (
 	"fmt"
+	"io/ioutil"
 
 	"github.com/pix303/minimal-rest-api-server/pkg/domain"
 )
@@ -13,8 +14,24 @@ func NewPostgresqlPersistenceService(dbdns string) (*PersistenceService, error) 
 		return nil, err
 	}
 	service := PersistenceService{db}
-
+	err = service.InitDB()
+	if err != nil {
+		return nil, err
+	}
 	return &service, nil
+}
+
+func (ps *PersistenceService) InitDB() error {
+	stmt, err := ioutil.ReadFile("pkg/persistence/init.sql")
+	if err != nil {
+		return err
+	}
+	_, err = ps.db.Exec(string(stmt))
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // GetUsers retrive all users
