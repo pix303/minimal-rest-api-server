@@ -14,14 +14,14 @@ func NewPostgresqlPersistenceService(dbdns string) (*PersistenceService, error) 
 		return nil, err
 	}
 	service := PersistenceService{db}
-	err = service.InitDB()
+	err = service.initDB()
 	if err != nil {
 		return nil, err
 	}
 	return &service, nil
 }
 
-func (ps *PersistenceService) InitDB() error {
+func (ps *PersistenceService) initDB() error {
 	stmt, err := ioutil.ReadFile("pkg/persistence/init.sql")
 	if err != nil {
 		return err
