@@ -10,6 +10,10 @@ import (
 	"github.com/pix303/minimal-rest-api-server/pkg/domain"
 )
 
+const (
+	DB_CONNECTION_VALID_ERROR = "no db connection valid"
+)
+
 // UserPersistencer rappresents users persist actions
 type UserPersistencer interface {
 	GetUsers(offset, limit int) ([]domain.User, error)
@@ -29,7 +33,7 @@ func GetDBInstance(dbdns string) (*sql.DB, error) {
 		if strings.HasPrefix(dbdns, "postgres") {
 			dbInstance, err = sql.Open("postgres", dbdns)
 		} else {
-			err = errors.New("no db connection valid")
+			err = errors.New(DB_CONNECTION_VALID_ERROR)
 		}
 
 		if err != nil {
