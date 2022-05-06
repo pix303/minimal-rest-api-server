@@ -17,8 +17,8 @@ type ProviderKeys struct {
 // InitOauth inits oauth manager
 func InitOauth(providersMap map[string]ProviderKeys, sessionSecret string) {
 
-	for k, pkeys := range providersMap {
-		switch k {
+	for key, pkeys := range providersMap {
+		switch key {
 		case "github":
 			goth.UseProviders(github.New(pkeys.ClientID, pkeys.ClientSecret, pkeys.Callback))
 		}
