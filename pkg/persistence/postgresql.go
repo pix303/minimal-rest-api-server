@@ -22,10 +22,14 @@ func NewPostgresqlPersistenceService(dbdns string) (*PersistenceService, error) 
 }
 
 func (ps *PersistenceService) initDB() error {
-	stmt, err := ioutil.ReadFile("pkg/persistence/init.sql")
+	stmt, err := ioutil.ReadFile("./assets/init.sql")
 	if err != nil {
-		return err
+		stmt, err = ioutil.ReadFile("../../assets/init.sql")
+		if err != nil {
+			return err
+		}
 	}
+
 	_, err = ps.db.Exec(string(stmt))
 	if err != nil {
 		return err
