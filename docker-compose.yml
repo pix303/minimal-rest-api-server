@@ -31,17 +31,6 @@ services:
     networks:
       - minimal-rest-api-context
 
-  #cli:  docker exec -it redis_container redis-cli
-  # redis:
-  #   container_name: redis_container
-  #   image: redis:latest
-  #   volumes:
-  #     - ./redis/data:/usr/local/redis/data
-  #   ports:
-  #     - "6379:6379"
-  #   networks:
-  #     - minimal-rest-api-context
-
 volumes:
   psqldata:
   pgadmindata:
