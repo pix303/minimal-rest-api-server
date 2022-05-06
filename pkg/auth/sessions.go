@@ -27,7 +27,7 @@ func NewSessionManager(dbdns string) (*Sessioner, error) {
 		return nil, err
 	}
 
-	mgr := sessionup.NewManager(s, sessionup.SameSite(http.SameSiteNoneMode))
+	mgr := sessionup.NewManager(s, sessionup.SameSite(http.SameSiteNoneMode), sessionup.ExpiresIn(24*time.Hour))
 	sm := Sessioner{mgr}
 	return &sm, nil
 }
