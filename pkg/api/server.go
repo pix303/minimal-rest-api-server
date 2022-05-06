@@ -52,6 +52,7 @@ func NewRouter(dbDns string) (*mux.Router, error) {
 	})
 	r.HandleFunc("/", welcomeHandler)
 	r.HandleFunc("/auth/{action}/{provider}", handler.loginHandler).Methods("GET")
+	r.HandleFunc("/auth/logout", handler.logoutHandler).Methods("GET")
 
 	subr := r.PathPrefix("/api/v1").Subrouter()
 	subr.Use(handler.Sessioner.StoreManager.Auth)
@@ -103,25 +104,25 @@ func (h *Handler) loginHandler(rw http.ResponseWriter, rq *http.Request) {
 
 		http.Redirect(rw, rq, "/api/v1/", http.StatusSeeOther)
 		return
+	}
+}
 
-	case "logout":
-		err := gothic.Logout(rw, rq)
-		if err != nil {
-			RespondError(rw, rq, err, fmt.Sprintf("failed logout for %s", provider), http.StatusUnauthorized)
-			return
-		}
+func (h *Handler) logoutHandler(rw http.ResponseWriter, rq *http.Request) {
+	err := gothic.Logout(rw, rq)
+	if err != nil {
+		RespondError(rw, rq, err, "failed logout", http.StatusUnauthorized)
+		return
+	}
 
-		err = h.Sessioner.StoreManager.Revoke(rq.Context(), rw)
-		if err != nil {
-			RespondError(rw, rq, err, "failed session out", http.StatusUnauthorized)
-		} else {
-			http.Redirect(rw, rq, "/", http.StatusPermanentRedirect)
-		}
+	err = h.Sessioner.StoreManager.Revoke(rq.Context(), rw)
+	if err != nil {
+		RespondError(rw, rq, err, "failed session out", http.StatusUnauthorized)
+	} else {
+		http.Redirect(rw, rq, "/", http.StatusTemporaryRedirect)
 	}
 }
 
 func welcomeAuthedHandler(rw http.ResponseWriter, rq *http.Request) {
-
 	EncodeBody(rw, rq, "Welcome unknow to minimal web api authenticated")
 }
 
