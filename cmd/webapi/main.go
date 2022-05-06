@@ -14,10 +14,13 @@ import (
 )
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Error().Msgf("Loading env: %s", err.Error())
-		return
+
+	if os.Getenv("POSTGRES_DNS") == "" {
+		err := godotenv.Load()
+		if err != nil {
+			log.Error().Msgf("Loading env: %s", err.Error())
+			return
+		}
 	}
 
 	log.Info().Msg("Hello minimal api!")
