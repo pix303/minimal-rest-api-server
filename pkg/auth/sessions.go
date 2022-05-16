@@ -15,6 +15,12 @@ type Sessioner struct {
 	StoreManager *sessionup.Manager
 }
 
+type User struct {
+	ID       int32
+	Username string
+}
+
+
 // NewSessionManager build and return db session store manager
 func NewSessionManager(dbdns string) (*Sessioner, error) {
 	db, err := persistence.GetDBInstance(dbdns)

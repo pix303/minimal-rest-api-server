@@ -19,7 +19,7 @@ type contextKey struct {
 // Handler take care of persistence, auth and session requests
 type Handler struct {
 	Sessioner   *auth.Sessioner
-	UserService persistence.UserPersistencer
+	ItemService persistence.ItemPersistencer
 }
 
 func newHandler(dbdns string) (*Handler, error) {
@@ -33,7 +33,7 @@ func newHandler(dbdns string) (*Handler, error) {
 		return nil, err
 	}
 
-	return &Handler{UserService: ps, Sessioner: s}, nil
+	return &Handler{ItemService: ps, Sessioner: s}, nil
 }
 
 // NewRouter return new Router/Multiplex to handler api request endpoint
@@ -57,7 +57,7 @@ func NewRouter(dbDns string) (*mux.Router, error) {
 	subr := r.PathPrefix("/api/v1").Subrouter()
 	subr.Use(handler.Sessioner.StoreManager.Auth)
 	subr.HandleFunc("/", welcomeAuthedHandler).Methods("GET")
-	subr.HandleFunc("/users", handler.usersGetHandler).Methods("GET")
+	subr.HandleFunc("/items", handler.usersGetHandler).Methods("GET")
 
 	return r, nil
 }
@@ -127,11 +127,11 @@ func welcomeAuthedHandler(rw http.ResponseWriter, rq *http.Request) {
 }
 
 func (s *Handler) usersGetHandler(rw http.ResponseWriter, rq *http.Request) {
-	users, err := s.UserService.GetUsers(0, 10)
+	items, err := s.ItemService.GetItems(0, 10)
 	if err != nil {
-		RespondError(rw, rq, err, "Error on retrive users", http.StatusInternalServerError)
+		RespondError(rw, rq, err, "Error on retrive items", http.StatusInternalServerError)
 		return
 	}
 
-	EncodeBody(rw, rq, users)
+	EncodeBody(rw, rq, items)
 }

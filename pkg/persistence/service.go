@@ -6,17 +6,22 @@ import (
 	"strings"
 
 	_ "github.com/lib/pq"
-
-	"github.com/pix303/minimal-rest-api-server/pkg/domain"
 )
 
 const (
 	DB_CONNECTION_VALID_ERROR = "no db connection valid"
 )
 
-// UserPersistencer rappresents users persist actions
-type UserPersistencer interface {
-	GetUsers(offset, limit int) ([]domain.User, error)
+type Item struct {
+	ID         string `json:"id"`
+	Name       string `json:"name"`
+	Descripion string `json:"description"`
+	Pieces     int    `json:"pieces"`
+}
+
+// ItemPersistencer rappresents Item CRUD actions
+type ItemPersistencer interface {
+	GetItems(offset, limit int) ([]Item, error)
 }
 
 // PersistenceService wrap db connector
@@ -46,4 +51,10 @@ func GetDBInstance(dbdns string) (*sql.DB, error) {
 		}
 	}
 	return dbInstance, nil
+}
+
+func (ps *PersistenceService) ResetDBInstance() {
+	ps.db.Close()
+	ps.db = nil
+	dbInstance = nil
 }

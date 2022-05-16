@@ -3,8 +3,6 @@ package persistence
 import (
 	"fmt"
 	"io/ioutil"
-
-	"github.com/pix303/minimal-rest-api-server/pkg/domain"
 )
 
 // NewPersistenceService manage dbrms connecton and requests
@@ -39,23 +37,25 @@ func (ps *PersistenceService) initDB() error {
 }
 
 // GetUsers retrive all users
-func (ps *PersistenceService) GetUsers(offset, limit int) ([]domain.User, error) {
-	users := make([]domain.User, 0)
+func (ps *PersistenceService) GetItems(offset, limit int) ([]Item, error) {
+	items := make([]Item, 0)
 
-	rows, err := ps.db.Query(fmt.Sprintf("SELECT id, username FROM users LIMIT %d OFFSET %d", limit, offset))
+	rows, err := ps.db.Query(fmt.Sprintf("SELECT id, name, description, pieces FROM items LIMIT %d OFFSET %d", limit, offset))
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var id int32
-	var username string
+	var id string
+	var name string
+	var desc string
+	var pcs int
 	for rows.Next() {
-		err = rows.Scan(&id, &username)
+		err = rows.Scan(&id, &name, &desc, &pcs)
 		if err != nil {
 			return nil, err
 		}
-		users = append(users, domain.User{ID: id, Username: username})
+		items = append(items, Item{ID: id, Name: name, Descripion: desc, Pieces: pcs})
 	}
 
 	err = rows.Err()
@@ -63,5 +63,5 @@ func (ps *PersistenceService) GetUsers(offset, limit int) ([]domain.User, error)
 		return nil, err
 	}
 
-	return users, nil
+	return items, nil
 }
