@@ -24,6 +24,7 @@ type ItemPersistencer interface {
 	GetItems(offset, limit int) ([]Item, error)
 	GetItem(id string) (*Item, error)
 	PostItem(item Item) (string, error)
+	PutItem(item Item) (*Item, error)
 }
 
 // PersistenceService wrap db connector
