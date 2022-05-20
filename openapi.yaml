@@ -1,0 +1,117 @@
+openapi: "3.0.2"
+info:
+  title: Minimal api
+  description: Template project for web api
+  version: "1.0"
+servers:
+  - url: https://localhost:8080
+tags:
+  - name: "items"
+    description: "generic entity"
+paths:
+  /ping:
+    get:
+      responses:
+        "200":
+          description: OK
+  /items:
+    get:
+      summary: "Return items"
+      operationId: "getItems"
+      tags:
+        - "items"
+      parameters:
+        - name: "offset"
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: "limit"
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: "Successful list of items"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Item"
+        "400":
+          description: "Error due to wrong request"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      summary: "Create new item"
+      operationId: "postItem"
+      tags:
+        - "items"
+      requestBody:
+        description: "payload to insert"
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Item"
+      responses:
+        "201":
+          description: "successful creation item"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Item"
+        "400":
+          description: "wrong payload"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /items/{id}:
+    get:
+      summary: "Return single item"
+      operationId: "getItem"
+      tags:
+        - "items"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "Successful item"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Item"
+        "404":
+          description: "Missing item"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+components:
+  schemas:
+    Item:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        quantity:
+          type: integer
+
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
