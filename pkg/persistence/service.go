@@ -13,15 +13,17 @@ const (
 )
 
 type Item struct {
-	ID         string `json:"id"`
+	ID         string `json:"id,omitempty"`
 	Name       string `json:"name"`
 	Descripion string `json:"description"`
-	Pieces     int    `json:"pieces"`
+	Quantity   int    `json:"quantity,omitempty"`
 }
 
 // ItemPersistencer rappresents Item CRUD actions
 type ItemPersistencer interface {
 	GetItems(offset, limit int) ([]Item, error)
+	GetItem(id string) (*Item, error)
+	PostItem(item Item) (string, error)
 }
 
 // PersistenceService wrap db connector
